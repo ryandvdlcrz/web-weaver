@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Weaver — Teacher Admin Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="../styles.css" />
+
+  <style>
+    body {
+      background-color: #faf7f2;
+      font-family: 'Nunito', sans-serif;
+      color: #333333;
+      margin: 0;
+      padding: 0;
+    }
+    .topbar {
+      background-color: #4a2e6b;
+      color: #ffffff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-mark {
+      font-size: 1.8rem;
+    }
+    .brand-title {
+      font-family: 'Baloo 2', cursive;
+      font-weight: 800;
+      font-size: 1.4rem;
+      line-height: 1.1;
+    }
+    .brand-sub {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+    .admin-wrap {
+      max-width: 1080px;
+      margin: 40px auto;
+      padding: 0 20px 48px;
+    }
+    .admin-card {
+      background: #ffffff;
+      border: 2px solid #e2d9cc;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+      margin-bottom: 24px;
+    }
+    .admin-login-box {
+      max-width: 440px;
+      margin: 40px auto;
+    }
+    .admin-card h2, .admin-card h3 {
+      font-family: 'Baloo 2', cursive;
+      color: #4a2e6b;
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      align-items: end;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #4a2e6b;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e2d9cc;
+      border-radius: 10px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: #6b3ba7;
+    }
+    .btn-theme {
+      background-color: #6b3ba7;
+      color: #ffffff;
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-theme:hover {
+      background-color: #552d88;
+    }
+    .btn-outline {
+      background-color: transparent;
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      padding: 8px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn-outline:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+    .btn-sm-ghost {
+      background: transparent;
+      border: 1px solid #e2d9cc;
+      color: #4a2e6b;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-sm-ghost:hover {
+      background: #faf7f2;
+    }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .toolbar-left {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .toolbar select {
+      padding: 8px 12px;
+      border: 2px solid #e2d9cc;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+    }
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2d9cc;
+      text-align: left;
+    }
+    th {
+      background: #faf7f2;
+      color: #4a2e6b;
+      font-weight: 800;
+    }
+    .status-text {
+      color: #d9534f;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .success-text {
+      color: #2b8a3e;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">📊</span>
+      <div>
+        <div class="brand-title">WORD WEAVER ADMIN</div>
+        <div class="brand-sub">Teacher Student Roster &amp; Progress</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <a href="../" class="btn-outline">Student App</a>
+      <button type="button" id="admin-logout-btn" class="btn-outline hidden">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="admin-wrap">
+    <!-- Teacher Sign In Card -->
+    <section id="admin-login-section" class="admin-card admin-login-box">
+      <h2>Teacher Sign In</h2>
+      <p style="color: #666; margin: 6px 0 20px;">Sign in with your teacher account to create student accounts and view progress.</p>
+
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label for="admin-email">Teacher Email</label>
+          <input type="email" id="admin-email" required />
+        </div>
+        <div class="form-group">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" required />
+        </div>
+        <button type="submit" class="btn-theme" style="width: 100%;">Sign In as Teacher</button>
+        <p id="admin-login-status" class="status-text"></p>
+      </form>
+    </section>
+
+    <!-- Admin Dashboard (Hidden until logged in) -->
+    <section id="admin-dashboard" class="hidden">
+      <!-- Create Student Account Form -->
+      <div class="admin-card">
+        <h3>Create Student Account</h3>
+        <form id="create-student-form" class="form-grid">
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="new-student-username">Username</label>
+            <input type="text" id="new-student-username" placeholder="e.g. juan.narra" required />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="new-student-fullname">Student Full Name</label>
+            <input type="text" id="new-student-fullname" placeholder="e.g. Juan Dela Cruz" required />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="new-student-section">Section Name</label>
+            <input type="text" id="new-student-section" placeholder="e.g. Narra" required />
+          </div>
+          <button type="submit" class="btn-theme">Create Student Account</button>
+        </form>
+        <p id="admin-action-status" class="success-text"></p>
+      </div>
+
+      <!-- Student Roster Table -->
+      <div class="admin-card">
+        <div class="toolbar">
+          <h3 style="margin:0;">Student Accounts</h3>
+          <div class="toolbar-left">
+            <select id="filter-section-select">
+              <option value="ALL">All Sections</option>
+            </select>
+            <button type="button" id="refresh-admin-btn" class="btn-sm-ghost">Refresh</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Student Full Name</th>
+                <th>Section Name</th>
+                <th>Status</th>
+                <th>Attempts</th>
+                <th>Avg Accuracy</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="roster-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>
