@@ -105,13 +105,15 @@ const lessonController = new AteHabiLesson({
 const voice = lessonController.voice;
 let slowDictation = false;
 
+// Plays the MP3 for this item first (item.audioUrl).
+// If the MP3 is missing or blocked, voice.js falls back to browser TTS.
 function speakQuestionItem(item, { slow = slowDictation } = {}) {
   if (!voice) return;
   const textToSpeak = item.audioText || item.prompt;
   voice.speak(textToSpeak, {
-    isDictation: true,
-    rate: slow ? 0.74 : 0.86,
-    audioUrl: item.audioUrl || null
+    audioUrl: item.audioUrl || null,
+    rate: slow ? 0.74 : 0.86, // used by the browser TTS fallback
+    audioRate: slow ? 0.85 : 1 // used when the MP3 plays
   });
 }
 

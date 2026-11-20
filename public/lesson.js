@@ -1,6 +1,11 @@
+// public/lesson.js
+
+import { ateHabiVoice } from "./voice.js";
+
 /**
  * Ate Habi Animated Lesson Guide Controller
- * Manages typewriter animation, speech synthesis sync, and visual aid rendering.
+ * Manages typewriter animation, speech sync, and visual aid rendering.
+ * Speech is handled by voice.js (MP3 first, female browser TTS as fallback).
  */
 
 export class AteHabiLesson {
@@ -38,13 +43,15 @@ export class AteHabiLesson {
     this.typewriterTimer = null;
     this.isVoiceEnabled = true;
     this.isSpeaking = false;
-    this.currentSpeechUtterance = null;
 
-    // Provide legacy/compat voice interface used by app.js
+    // Voice interface used by app.js
     this.voice = {
       speak: (text, opts = {}) => this.speakText(text, opts),
       stop: () => this.stopSpeech(),
-      setEnabled: (enabled) => { this.isVoiceEnabled = enabled; }
+      setEnabled: (enabled) => {
+        this.isVoiceEnabled = enabled;
+        if (!enabled) this.stopSpeech();
+      }
     };
 
     this.initEventListeners();
@@ -120,13 +127,16 @@ export class AteHabiLesson {
       this.elements.backBtn.disabled = this.currentIndex === 0;
     }
     if (this.elements.nextBtn) {
-      this.elements.nextBtn.textContent = this.currentIndex === this.screens.length - 1 ? "Start Level" : "Next";
+      this.elements.nextBtn.textContent =
+        this.currentIndex === this.screens.length - 1 ? "Start Level" : "Next";
     }
 
     this.renderVisualAid(screen);
-    this.startTypewriter(screen.speech, () => {
-      this.speakText(screen.dictationText || screen.speech);
-    });
+
+    // Start the voice right away. The mouth only moves when audio really starts
+    // (see onStart in speakText), so it never opens before there is sound.
+    this.speakText(screen.dictationText || screen.speech, { audioUrl: screen.audioUrl || null });
+    this.startTypewriter(screen.speech);
   }
 
   startTypewriter(text, onComplete) {
@@ -134,17 +144,12 @@ export class AteHabiLesson {
     this.elements.speechText.textContent = "";
     let index = 0;
 
-    this.setMouthSpeaking(true);
-
     this.typewriterTimer = setInterval(() => {
       if (index < text.length) {
         this.elements.speechText.textContent += text.charAt(index);
         index++;
       } else {
         this.clearTypewriter();
-        if (!this.isSpeaking) {
-          this.setMouthSpeaking(false);
-        }
         if (onComplete) onComplete();
       }
     }, 24);
@@ -158,7 +163,6 @@ export class AteHabiLesson {
     if (this.elements.speechText) {
       this.elements.speechText.textContent = screen.speech;
     }
-    this.speakText(screen.dictationText || screen.speech);
   }
 
   clearTypewriter() {
@@ -168,41 +172,35 @@ export class AteHabiLesson {
     }
   }
 
+  /**
+   * Speak through voice.js.
+   * options: { audioUrl, rate, pitch, audioRate, onStart, onEnd }
+   */
   speakText(text, options = {}) {
-    if (!this.isVoiceEnabled || !("speechSynthesis" in window)) return;
+    if (!this.isVoiceEnabled) return;
 
     this.stopSpeech();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = options.rate || 0.95;
-    utterance.pitch = options.pitch || 1.05;
-
-    utterance.onstart = () => {
-      this.isSpeaking = true;
-      this.setMouthSpeaking(true);
-      if (options.onStart) options.onStart();
-    };
-
-    utterance.onend = () => {
-      this.isSpeaking = false;
-      this.setMouthSpeaking(false);
-      if (options.onEnd) options.onEnd();
-    };
-
-    utterance.onerror = (err) => {
-      this.isSpeaking = false;
-      this.setMouthSpeaking(false);
-      if (options.onError) options.onError(err);
-    };
-
-    this.currentSpeechUtterance = utterance;
-    window.speechSynthesis.speak(utterance);
+    ateHabiVoice.speak(text, {
+      audioUrl: options.audioUrl || null,
+      rate: options.rate || 0.95,
+      pitch: options.pitch,
+      audioRate: options.audioRate,
+      onStart: () => {
+        this.isSpeaking = true;
+        this.setMouthSpeaking(true);
+        if (options.onStart) options.onStart();
+      },
+      onEnd: () => {
+        this.isSpeaking = false;
+        this.setMouthSpeaking(false);
+        if (options.onEnd) options.onEnd();
+      }
+    });
   }
 
   stopSpeech() {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
+    ateHabiVoice.stop();
     this.isSpeaking = false;
     this.setMouthSpeaking(false);
   }
@@ -221,13 +219,15 @@ export class AteHabiLesson {
   replayCurrentLine() {
     const screen = this.screens[this.currentIndex];
     if (!screen) return;
-    this.skipTypewriter();
+    this.renderScreen();
   }
 
   toggleVoice() {
     this.isVoiceEnabled = !this.isVoiceEnabled;
     if (this.elements.voiceToggleBtn) {
-      this.elements.voiceToggleBtn.textContent = this.isVoiceEnabled ? "🔊 Voice: On" : "🔇 Voice: Off";
+      this.elements.voiceToggleBtn.textContent = this.isVoiceEnabled
+        ? "🔊 Voice: On"
+        : "🔇 Voice: Off";
     }
     if (!this.isVoiceEnabled) {
       this.stopSpeech();
