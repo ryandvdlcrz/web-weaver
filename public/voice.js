@@ -1,10 +1,12 @@
 // public/voice.js
 
 const FEMALE_HINTS = [
-  "blessica", "rosa", "maria", "zira", "hazel", "susan", "catherine",
+  "blessica", "zira", "hazel", "susan", "catherine",
   "samantha", "victoria", "karen", "fiona", "jenny", "aria", "michelle",
   "sonia", "libby", "natasha", "clara", "emma", "ava", "allison", "tessa",
   "moira", "female", "woman"
+  // "maria" and "rosa" removed — they commonly match Filipino/Spanish voices
+  // and were boosting non-English voices for English text.
 ];
 
 const MALE_REGEX = new RegExp(
@@ -14,14 +16,26 @@ const MALE_REGEX = new RegExp(
   "i"
 );
 
+// Default language Ate Habi speaks when the caller doesn't specify one.
+// "en-US" is the safest fallback. Use "en-PH" or "en-GB" if you prefer.
+const DEFAULT_LANG = "en-US";
+
+function normalizeLang(lang) {
+  return (lang || "").toLowerCase().replace("_", "-");
+}
+
+function baseLang(lang) {
+  return normalizeLang(lang).split("-")[0];
+}
+
 class AteHabiVoiceController {
   constructor() {
     this.currentAudio = null;
     this.synth =
       typeof window !== "undefined" && window.speechSynthesis ? window.speechSynthesis : null;
-    this.selectedVoice = null;
+    this.selectedVoice = null;        // kept for backwards compat (English pick)
     this.isMuted = false;
-    this.token = 0; // bumps on every stop/speak so stale callbacks are ignored
+    this.token = 0;                   // bumps on every stop/speak so stale callbacks are ignored
 
     this.initSpeechSynthesis();
   }
@@ -32,31 +46,48 @@ class AteHabiVoiceController {
     const loadVoices = () => {
       const voices = this.synth.getVoices();
       if (voices.length > 0) {
-        this.selectedVoice = this._pickFemaleVoice(voices);
+        // Keep selectedVoice as the "default English voice" for legacy callers.
+        this.selectedVoice = this._pickVoiceForLang(DEFAULT_LANG, voices);
       }
     };
 
     loadVoices();
     this.synth.onvoiceschanged = loadVoices;
+
+    // Android sometimes fires onvoiceschanged late; poll once as a safety net.
+    if (typeof setTimeout === "function") {
+      setTimeout(loadVoices, 500);
+    }
   }
 
-  _scoreVoice(v) {
+  /**
+   * Score a voice against the language we actually want to speak.
+   * Higher = better match. Negative = clearly wrong language.
+   */
+  _scoreVoice(v, targetLang = DEFAULT_LANG) {
     const name = (v.name || "").toLowerCase();
-    const lang = (v.lang || "").toLowerCase().replace("_", "-");
+    const lang = normalizeLang(v.lang);
+    const target = normalizeLang(targetLang);
+    const targetBase = baseLang(target);
     let score = 0;
 
     if (MALE_REGEX.test(name)) score -= 500;
     if (FEMALE_HINTS.some((hint) => name.includes(hint))) score += 150;
 
-    if (lang.startsWith("en-ph") || lang.startsWith("fil") || lang.startsWith("tl")) {
-      score += 100;
-    } else if (lang.startsWith("en")) {
-      score += 30;
+    // Language match — this is what decides the SPOKEN LANGUAGE.
+    if (lang === target) {
+      score += 100;                                   // exact locale match
+    } else if (baseLang(lang) === targetBase) {
+      score += 80;                                    // same language, other region
+    } else if (targetBase === "en" && lang.startsWith("en-ph")) {
+      score += 60;                                    // PH English is fine for English
+    } else if (lang.startsWith("en") || lang.startsWith("fil") || lang.startsWith("tl")) {
+      score += 10;                                    // English/Filipino family, weak match
     } else {
-      score -= 50; // avoid non-English voices reading English spelling words
+      score -= 100;                                   // unrelated language
     }
 
-    // Chrome's default "Google US English" is a female voice but has no gender in its name
+    // Extra heuristics for nicer / more reliable voices.
     if (name.includes("google us english") || name.includes("google uk english female")) {
       score += 60;
     }
@@ -66,9 +97,25 @@ class AteHabiVoiceController {
     return score;
   }
 
-  _pickFemaleVoice(voices) {
+  /**
+   * Pick the best voice for a target language.
+   * Returns null if no acceptable voice exists — callers should still set
+   * utterance.lang so the system falls back to the right language.
+   */
+  _pickVoiceForLang(targetLang = DEFAULT_LANG, voicesArg = null) {
+    const voices = voicesArg || (this.synth ? this.synth.getVoices() : []);
     if (!voices || !voices.length) return null;
-    return [...voices].sort((a, b) => this._scoreVoice(b) - this._scoreVoice(a))[0] || null;
+
+    const ranked = [...voices].sort(
+      (a, b) => this._scoreVoice(b, targetLang) - this._scoreVoice(a, targetLang)
+    );
+    const best = ranked[0];
+    return best && this._scoreVoice(best, targetLang) >= 0 ? best : null;
+  }
+
+  // Backwards-compatible name used elsewhere in the app.
+  _pickFemaleVoice(voices) {
+    return this._pickVoiceForLang(DEFAULT_LANG, voices);
   }
 
   stop() {
@@ -88,7 +135,7 @@ class AteHabiVoiceController {
 
   /**
    * speak(text, options)
-   * options: { audioUrl, rate, pitch, audioRate, onStart, onEnd }
+   * options: { audioUrl, rate, pitch, audioRate, lang, onStart, onEnd }
    * Also still accepts the old form: speak(text, "audio/file.mp3", onEndCallback)
    */
   speak(text, options = null, legacyOnEnd = null) {
@@ -151,12 +198,29 @@ class AteHabiVoiceController {
       return;
     }
 
+    const targetLang = opts.lang || DEFAULT_LANG;
+    const targetBase = baseLang(targetLang);
+
+    // Pick the voice that matches the language of THIS utterance.
+    const voice = this._pickVoiceForLang(targetLang);
+
     const utterance = new SpeechSynthesisUtterance(text);
-    const voice = this.selectedVoice || this._pickFemaleVoice(this.synth.getVoices());
+
     if (voice) {
       utterance.voice = voice;
-      utterance.lang = voice.lang;
     }
+
+    // ---- THE ANDROID FIX ----
+    // Android Chrome frequently ignores `utterance.voice` and picks the system
+    // default TTS language. `utterance.lang` is the only reliably honored knob,
+    // so always set it explicitly to the target language.
+    if (voice) {
+      const voiceLang = normalizeLang(voice.lang);
+      utterance.lang = baseLang(voiceLang) === targetBase ? voiceLang : targetLang;
+    } else {
+      utterance.lang = targetLang;
+    }
+    // -------------------------
 
     utterance.rate = opts.rate || 0.95;
     utterance.pitch = opts.pitch || 1.1;
