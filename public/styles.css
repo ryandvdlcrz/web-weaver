@@ -465,9 +465,14 @@ h1, h2, h3, .brand-title {
   flex-wrap: wrap;
 }
 
+/* --------------------------------------------------------------------------
+   LESSON STAGE — Ate Habi + speech bubble + visual aid
+   Base (tablet/desktop): her column scales with the viewport so she never
+   jumps abruptly at a breakpoint. Mobile override below tunes her further.
+   -------------------------------------------------------------------------- */
 .lesson-stage {
   display: grid;
-  grid-template-columns: 185px 1fr;
+  grid-template-columns: clamp(140px, 16vw, 185px) 1fr;
   gap: 20px;
   align-items: start;
 }
@@ -489,10 +494,24 @@ h1, h2, h3, .brand-title {
   border-color: var(--purple);
 }
 
+/* Ate Habi SVG — fluid size, aspect matches viewBox 180:200 */
+.ate-habi {
+  width: clamp(120px, 14vw, 160px);
+  height: auto;
+  aspect-ratio: 180 / 200;
+  overflow: visible;
+  display: block;
+}
+
 .tap-hint {
   font-size: 0.76rem;
   font-weight: 700;
   color: var(--muted);
+}
+
+/* Speaking glow so the talk animation is noticeable at any size */
+.ate-habi.speaking {
+  filter: drop-shadow(0 0 6px rgba(92, 36, 131, 0.35));
 }
 
 /* Ate Habi Head & Eye Animations */
@@ -515,7 +534,7 @@ h1, h2, h3, .brand-title {
 }
 
 /* --------------------------------------------------------------------------
-   FIXED ATE HABI MOUTH ANIMATION: 
+   FIXED ATE HABI MOUTH ANIMATION:
    Anchored directly around mouth center (90, 88) to stop vertical jumping.
    -------------------------------------------------------------------------- */
 #habi-mouth-group {
@@ -927,9 +946,6 @@ table {
 
 /* ==========================================================================
    MOBILE (max-width: 680px)
-   Lesson, gameplay and result panels become full-screen pop-up sheets with a
-   sticky header and a sticky bottom action bar. Only the .hidden class is
-   used to open/close them, so no JS changes are needed for that part.
    ========================================================================== */
 @keyframes sheetUp {
   from { transform: translateY(24px); opacity: 0; }
@@ -1085,38 +1101,67 @@ table {
     white-space: nowrap;
   }
 
-  /* Ate Habi on the left, speech bubble on the right, visual aid below */
+  /* ---------- Ate Habi: Stacked layout on mobile ---------- */
   .lesson-stage {
-    grid-template-columns: 92px minmax(0, 1fr);
-    gap: 10px;
+    display: flex;
+    flex-direction: column; /* Stack them vertically */
+    gap: 12px;
     margin-bottom: 14px;
   }
 
   .speech-column { display: contents; }
 
+  /* Ate Habi becomes a compact horizontal banner at the top */
   .character-btn {
-    grid-column: 1;
-    grid-row: 1;
-    flex-direction: column;
-    padding: 8px 4px;
-    gap: 4px;
+    order: 1;
+    width: 100%; /* Full width */
+    flex-direction: row; /* Put her image and text side-by-side */
+    justify-content: flex-start;
+    padding: 10px 16px;
+    gap: 16px;
+    background: linear-gradient(90deg, #fbf8ff 0%, #f3eafb 100%);
+    border-color: #dec9f2;
+    box-shadow: 0 4px 12px rgba(92, 36, 131, 0.08);
+    align-self: stretch;
   }
 
+  /* Increased size to fill the banner better */
   .ate-habi {
-    width: 76px;
-    height: 84px;
+    width: 96px; 
+    height: auto;
+    aspect-ratio: 180 / 200;
   }
 
+  /* Made the text larger and bolder to match her scale */
   .tap-hint {
-    font-size: 0.62rem;
-    line-height: 1.15;
-    text-align: center;
+    font-size: 1rem;
+    line-height: 1.2;
+    text-align: left;
+    font-weight: 800;
+    color: var(--purple);
+    margin: 0;
   }
 
+  /* The speech bubble sits below her */
   .speech-bubble {
-    grid-column: 2;
-    grid-row: 1;
-    padding: 12px 14px;
+    order: 2;
+    width: 100%;
+    position: relative;
+    padding: 14px;
+  }
+
+  /* Remove the left-pointing tail, add a top-pointing tail */
+  .speech-bubble::before {
+    content: "";
+    position: absolute;
+    left: 42px; /* Point up toward Ate Habi */
+    top: -8px;
+    width: 14px;
+    height: 14px;
+    background: var(--purple-soft);
+    border-left: 2px solid #dec9f2;
+    border-top: 2px solid #dec9f2;
+    transform: rotate(45deg);
   }
 
   .speech-text {
@@ -1124,10 +1169,17 @@ table {
     min-height: 48px;
   }
 
+  .speech-bubble .btn-link {
+    margin-top: 8px;
+    display: inline-block;
+  }
+
+  /* Visual aid stays at the bottom */
   .visual-aid-box {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    order: 3;
+    width: 100%;
     min-height: 64px;
+    margin-top: 4px;
   }
 
   .lesson-nav {
