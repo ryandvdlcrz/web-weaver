@@ -2,66 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <title>Word Weaver — Teacher Admin Dashboard</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet" />
-
-  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="/styles.css" />
 
   <style>
+    /* ==========================================================================
+       RESPONSIVE ADMIN STYLES & MOBILE CARD TRANSFORMATION
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
     body {
       background-color: #faf7f2;
       font-family: 'Nunito', sans-serif;
       color: #333333;
       margin: 0;
       padding: 0;
+      overflow-x: hidden;
     }
+
+    /* Sticky Top Header */
     .topbar {
       background-color: #4a2e6b;
       color: #ffffff;
-      padding: 16px 24px;
+      padding: 14px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     .brand-mark {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
     }
     .brand-title {
       font-family: 'Baloo 2', cursive;
       font-weight: 800;
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       line-height: 1.1;
     }
     .brand-sub {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       opacity: 0.9;
     }
-    .admin-wrap {
-      max-width: 1080px;
-      margin: 40px auto;
-      padding: 0 20px 48px;
+    .top-actions {
+      display: flex;
+      gap: 8px;
     }
+
+    /* Main Container */
+    .admin-wrap {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 16px 48px;
+      width: 100%;
+    }
+
+    /* Cards */
     .admin-card {
       background: #ffffff;
       border: 2px solid #e2d9cc;
       border-radius: 16px;
-      padding: 28px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-      margin-bottom: 24px;
+      padding: 24px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+      margin-bottom: 20px;
     }
     .admin-login-box {
       max-width: 440px;
-      margin: 40px auto;
+      margin: 32px auto;
     }
     .admin-card h2, .admin-card h3 {
       font-family: 'Baloo 2', cursive;
@@ -69,103 +92,153 @@
       margin-top: 0;
       margin-bottom: 12px;
     }
+
+    /* Form Layouts */
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
       align-items: end;
     }
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .form-group label {
       display: block;
       font-weight: 700;
       margin-bottom: 6px;
       color: #4a2e6b;
+      font-size: 0.92rem;
     }
     .form-group input, .form-group select {
       width: 100%;
+      min-height: 48px;
       padding: 10px 14px;
       border: 2px solid #e2d9cc;
       border-radius: 10px;
       font-family: 'Nunito', sans-serif;
-      font-size: 0.95rem;
+      font-size: 16px; /* Prevents auto-zoom on iOS Safari */
       box-sizing: border-box;
+      background-color: #ffffff;
     }
     .form-group input:focus, .form-group select:focus {
       outline: none;
       border-color: #6b3ba7;
     }
+
+    /* Buttons & Touch Targets */
     .btn-theme {
       background-color: #6b3ba7;
       color: #ffffff;
       font-family: 'Baloo 2', cursive;
       font-weight: 700;
       font-size: 1rem;
+      min-height: 48px;
       padding: 10px 20px;
       border: none;
       border-radius: 10px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       transition: background 0.2s;
+      touch-action: manipulation;
     }
-    .btn-theme:hover {
-      background-color: #552d88;
-    }
+    .btn-theme:hover { background-color: #552d88; }
+
     .btn-outline {
       background-color: transparent;
       color: #ffffff;
       border: 2px solid #ffffff;
-      padding: 8px 16px;
+      padding: 8px 14px;
       border-radius: 10px;
       text-decoration: none;
       font-weight: 700;
-      font-size: 0.9rem;
-      cursor: pointer;
+      font-size: 0.88rem;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
     }
-    .btn-outline:hover {
-      background-color: rgba(255, 255, 255, 0.15);
-    }
+    .btn-outline:hover { background-color: rgba(255, 255, 255, 0.15); }
+
     .btn-sm-ghost {
       background: transparent;
       border: 1px solid #e2d9cc;
       color: #4a2e6b;
-      padding: 4px 10px;
-      border-radius: 6px;
+      padding: 6px 12px;
+      min-height: 40px;
+      border-radius: 8px;
       font-size: 0.85rem;
       font-weight: 700;
       cursor: pointer;
+      touch-action: manipulation;
     }
-    .btn-sm-ghost:hover {
-      background: #faf7f2;
-    }
+    .btn-sm-ghost:hover { background: #faf7f2; }
+
+    /* Toolbars & KPI Metric Cards */
     .toolbar {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
     .toolbar-left {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
     .toolbar select {
+      min-height: 44px;
       padding: 8px 12px;
       border: 2px solid #e2d9cc;
       border-radius: 8px;
+      font-size: 16px;
       font-family: 'Nunito', sans-serif;
     }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-box {
+      background: #faf7f2;
+      border: 1px solid #e2d9cc;
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .stat-label {
+      display: block;
+      font-size: 0.75rem;
+      color: #666;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-value {
+      font-family: 'Baloo 2', cursive;
+      font-size: 1.6rem;
+      color: #4a2e6b;
+      line-height: 1.2;
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* Base Desktop Table Styling */
     .table-wrap {
+      width: 100%;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
     }
     th, td {
       padding: 10px 12px;
@@ -177,137 +250,164 @@
       color: #4a2e6b;
       font-weight: 800;
     }
-    .status-text {
-      color: #d9534f;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    .success-text {
-      color: #2b8a3e;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    .hidden {
-      display: none !important;
-    }
+
+    /* Badges */
+    .badge-good { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 999px; font-weight: 800; font-size: 0.78rem; }
+    .badge-warn { background: #fef9c3; color: #854d0e; padding: 3px 8px; border-radius: 999px; font-weight: 800; font-size: 0.78rem; }
+    .badge-bad { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 999px; font-weight: 800; font-size: 0.78rem; }
+    
+    .status-text { color: #d9534f; font-weight: 600; margin-top: 8px; }
+    .success-text { color: #2b8a3e; font-weight: 600; margin-top: 8px; }
+    .hidden { display: none !important; }
 
     /* ======================================================================
-       MOBILE (max-width: 680px)
-       The wide roster table turns into one card per student. Labels come from
-       the ::before rules below, so admin.js does not need any changes.
+       MOBILE & TABLET BREAKPOINTS (max-width: 768px)
+       Transforms wide tables into touch-friendly stacked cards.
        ====================================================================== */
-    @media screen and (max-width: 680px) {
+    @media screen and (max-width: 768px) {
       .topbar {
         padding: 10px 14px;
-        gap: 8px;
       }
-      .brand { gap: 10px; }
-      .brand-mark { font-size: 1.5rem; }
-      .brand-title { font-size: 1.1rem; }
-      .btn-outline {
-        padding: 8px 12px;
-        font-size: 0.82rem;
+      .brand-sub {
+        display: none;
       }
-
       .admin-wrap {
-        margin: 16px auto;
-        padding: 0 12px 32px;
+        margin: 12px auto;
+        padding: 0 10px 32px;
       }
       .admin-card {
-        padding: 16px;
+        padding: 16px 12px;
         border-radius: 14px;
-        margin-bottom: 16px;
-      }
-      .admin-login-box { margin: 16px auto; }
-
-      /* 16px font stops iOS from zooming into inputs */
-      .form-group input,
-      .form-group select,
-      .toolbar select {
-        font-size: 16px;
-        min-height: 48px;
+        margin-bottom: 14px;
       }
 
-      .btn-theme {
-        width: 100%;
-        min-height: 48px;
+      /* Stack creation forms vertically */
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
       }
 
+      /* Stack toolbar controls vertically */
       .toolbar {
         flex-direction: column;
         align-items: stretch;
+        gap: 10px;
       }
       .toolbar-left {
         width: 100%;
-        flex-wrap: nowrap;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
       }
-      .toolbar-left select {
-        flex: 1;
-        min-width: 0;
-      }
-      .btn-sm-ghost {
-        min-height: 44px;
-        padding: 8px 14px;
+      .toolbar select, .toolbar button {
+        width: 100%;
       }
 
-      /* Table -> cards */
-      .table-wrap { overflow-x: visible; }
+      /* 2-column KPI grid on phone screens */
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .stat-box {
+        padding: 10px 6px;
+      }
+      .stat-value {
+        font-size: 1.35rem;
+      }
 
-      table, tbody, tr, td {
+      /* ------------------------------------------------------------------
+         TABLE TO MOBILE CARD CONVERSION (ROSTER TABLE)
+         ------------------------------------------------------------------ */
+      #roster-table, 
+      #roster-table tbody, 
+      #roster-table tr, 
+      #roster-table td {
         display: block;
         width: 100%;
       }
-      thead { display: none; }
-
-      tbody tr {
+      #roster-table thead {
+        display: none;
+      }
+      #roster-table tbody tr {
         background: #ffffff;
         border: 2px solid #e2d9cc;
-        border-radius: 14px;
-        padding: 6px 14px;
+        border-radius: 12px;
+        padding: 10px 12px;
         margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
       }
-
-      td {
+      #roster-table td {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
         padding: 8px 0;
         border-bottom: 1px dashed #eadfce;
+        font-size: 0.88rem;
         text-align: right;
-        white-space: normal;
-        word-break: break-word;
       }
-
-      td::before {
-        font-weight: 800;
-        color: #4a2e6b;
-        text-align: left;
-        flex-shrink: 0;
-      }
-
-      td:nth-child(1)::before { content: "Username"; }
-      td:nth-child(2)::before { content: "Full Name"; }
-      td:nth-child(3)::before { content: "Section"; }
-      td:nth-child(4)::before { content: "Status"; }
-      td:nth-child(5)::before { content: "Attempts"; }
-      td:nth-child(6)::before { content: "Avg Accuracy"; }
-
-      td:last-child {
+      #roster-table td:last-child {
         border-bottom: none;
+        padding-top: 10px;
+        justify-content: flex-end;
         gap: 8px;
-        padding-top: 12px;
       }
-      td:last-child::before { content: none; }
-      td:last-child .btn-sm-ghost { flex: 1; }
+      #roster-table td:nth-child(1)::before { content: "Username"; font-weight: 800; color: #4a2e6b; }
+      #roster-table td:nth-child(2)::before { content: "Full Name"; font-weight: 800; color: #4a2e6b; }
+      #roster-table td:nth-child(3)::before { content: "Section"; font-weight: 800; color: #4a2e6b; }
+      #roster-table td:nth-child(4)::before { content: "Status"; font-weight: 800; color: #4a2e6b; }
+      #roster-table td:nth-child(5)::before { content: "Levels Passed"; font-weight: 800; color: #4a2e6b; }
+      #roster-table td:nth-child(6)::before { content: "Avg Accuracy"; font-weight: 800; color: #4a2e6b; }
+      #roster-table td:nth-child(7)::before { content: "Avg Tries/Lvl"; font-weight: 800; color: #4a2e6b; }
+      #roster-table td:last-child::before { content: none; }
 
-      /* "No student accounts found." row */
-      td[colspan] {
+      /* ------------------------------------------------------------------
+         TABLE TO MOBILE CARD CONVERSION (ITEM BOTTLENECKS TABLE)
+         ------------------------------------------------------------------ */
+      #item-analytics-table, 
+      #item-analytics-table tbody, 
+      #item-analytics-table tr, 
+      #item-analytics-table td {
+        display: block;
+        width: 100%;
+      }
+      #item-analytics-table thead {
+        display: none;
+      }
+      #item-analytics-table tbody tr {
+        background: #faf7f2;
+        border: 1.5px solid #e2d9cc;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+      }
+      #item-analytics-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px dashed #e2d9cc;
+        font-size: 0.88rem;
+        text-align: right;
+      }
+      #item-analytics-table td:last-child {
+        border-bottom: none;
+      }
+      #item-analytics-table td:nth-child(1)::before { content: "Target Word"; font-weight: 800; color: #4a2e6b; }
+      #item-analytics-table td:nth-child(2)::before { content: "Type"; font-weight: 800; color: #4a2e6b; }
+      #item-analytics-table td:nth-child(3)::before { content: "Tested"; font-weight: 800; color: #4a2e6b; }
+      #item-analytics-table td:nth-child(4)::before { content: "Failures"; font-weight: 800; color: #4a2e6b; }
+      #item-analytics-table td:nth-child(5)::before { content: "Error Rate"; font-weight: 800; color: #4a2e6b; }
+      #item-analytics-table td:nth-child(6)::before { content: "Priority"; font-weight: 800; color: #4a2e6b; }
+
+      /* Fallback for empty state rows */
+      #roster-table td[colspan], #item-analytics-table td[colspan] {
         display: block;
         text-align: center;
         border: none;
       }
-      td[colspan]::before { content: none; }
+      #roster-table td[colspan]::before, #item-analytics-table td[colspan]::before {
+        content: none;
+      }
     }
   </style>
 </head>
@@ -317,7 +417,7 @@
       <span class="brand-mark" aria-hidden="true">📊</span>
       <div>
         <div class="brand-title">WORD WEAVER ADMIN</div>
-        <div class="brand-sub">Teacher Student Roster &amp; Progress</div>
+        <div class="brand-sub">Teacher Student Roster &amp; Class Analytics</div>
       </div>
     </div>
     <div class="top-actions">
@@ -327,11 +427,10 @@
   </header>
 
   <main class="admin-wrap">
-    <!-- Teacher Sign In Card -->
+    <!-- Teacher Sign In Section -->
     <section id="admin-login-section" class="admin-card admin-login-box">
       <h2>Teacher Sign In</h2>
-      <p style="color: #666; margin: 6px 0 20px;">Sign in with your teacher account to create student accounts and view progress.</p>
-
+      <p style="color: #666; margin: 6px 0 20px;">Sign in to access your class roster and item error analytics.</p>
       <form id="admin-login-form">
         <div class="form-group">
           <label for="admin-email">Teacher Email</label>
@@ -346,7 +445,7 @@
       </form>
     </section>
 
-    <!-- Admin Dashboard (Hidden until logged in) -->
+    <!-- Admin Dashboard (Hidden until authorized) -->
     <section id="admin-dashboard" class="hidden">
       <!-- Create Student Account Form -->
       <div class="admin-card">
@@ -364,33 +463,78 @@
             <label for="new-student-section">Section Name</label>
             <input type="text" id="new-student-section" placeholder="e.g. Narra" required />
           </div>
-          <button type="submit" class="btn-theme">Create Student Account</button>
+          <button type="submit" class="btn-theme">Create Account</button>
         </form>
         <p id="admin-action-status" class="success-text"></p>
       </div>
 
-      <!-- Student Roster Table -->
+      <!-- Class Performance Summary Cards -->
       <div class="admin-card">
         <div class="toolbar">
-          <h3 style="margin:0;">Student Accounts</h3>
+          <h3 style="margin:0;">Class Performance Summary</h3>
           <div class="toolbar-left">
             <select id="filter-section-select">
               <option value="ALL">All Sections</option>
             </select>
-            <button type="button" id="refresh-admin-btn" class="btn-sm-ghost">Refresh</button>
+            <button type="button" id="refresh-admin-btn" class="btn-sm-ghost">Refresh Data</button>
           </div>
         </div>
 
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-label">Active Students</span>
+            <strong id="sum-students" class="stat-value">0</strong>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Class Pass Rate</span>
+            <strong id="sum-pass-rate" class="stat-value">0%</strong>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Avg Accuracy</span>
+            <strong id="sum-avg-acc" class="stat-value">0%</strong>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Avg Tries / Level</span>
+            <strong id="sum-avg-tries" class="stat-value">1.0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Struggled Words & Item Bottlenecks Table -->
+      <div class="admin-card">
+        <h3>⚠️ Item Bottlenecks &amp; Struggled Words</h3>
+        <p style="color:#666; font-size:0.88rem; margin:-6px 0 14px;">Ranks target words by failure percentage to target remediation.</p>
         <div class="table-wrap">
-          <table>
+          <table id="item-analytics-table">
+            <thead>
+              <tr>
+                <th>Target Word / Item</th>
+                <th>Type</th>
+                <th>Tested</th>
+                <th>Failures</th>
+                <th>Error Rate</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody id="item-analytics-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Student Account Roster Table -->
+      <div class="admin-card">
+        <h3>Student Account Roster</h3>
+        <div class="table-wrap">
+          <table id="roster-table">
             <thead>
               <tr>
                 <th>Username</th>
                 <th>Student Full Name</th>
-                <th>Section Name</th>
+                <th>Section</th>
                 <th>Status</th>
-                <th>Attempts</th>
+                <th>Levels Passed</th>
                 <th>Avg Accuracy</th>
+                <th>Avg Tries/Lvl</th>
                 <th>Actions</th>
               </tr>
             </thead>
