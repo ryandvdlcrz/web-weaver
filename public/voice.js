@@ -86,6 +86,13 @@ export class AteHabiVoice {
   _pickFemaleVoice(voices) {
     if (!voices.length) return null;
 
+    // Filter out known male voice identifiers completely to prevent male system defaults
+    const nonMaleVoices = voices.filter((v) =>
+      !/\b(male|david|mark|guy|george|daniel|arthur|paul|james|steven)\b/i.test(v.name || "")
+    );
+
+    const candidates = nonMaleVoices.length > 0 ? nonMaleVoices : voices;
+
     const scoreVoice = (v) => {
       const name = (v.name || "").toLowerCase();
       const lang = (v.lang || "").toLowerCase();
@@ -103,14 +110,11 @@ export class AteHabiVoice {
       if (v.localService) {
         score += 5;
       }
-      if (/\b(male|david|mark|guy|george|daniel|arthur)\b/.test(name)) {
-        score -= 40;
-      }
 
       return score;
     };
 
-    return [...voices].sort((a, b) => scoreVoice(b) - scoreVoice(a))[0] || null;
+    return [...candidates].sort((a, b) => scoreVoice(b) - scoreVoice(a))[0] || null;
   }
 
   setEnabled(enabled) {
