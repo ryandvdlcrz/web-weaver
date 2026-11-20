@@ -1,299 +1,282 @@
-// public/lesson.js
-import { AteHabiVoice } from "./voice.js";
+/**
+ * Ate Habi Animated Lesson Guide Controller
+ * Manages typewriter animation, speech synthesis sync, and visual aid rendering[cite: 6].
+ */
 
 export class AteHabiLesson {
-  constructor({ onComplete }) {
+  constructor(elements, onComplete) {
+    this.elements = elements;
     this.onComplete = onComplete;
-    this.lessonData = null;
-    this.missionId = 1;
-    this.stepIndex = 0;
-    this.voiceEnabled = true;
-    this.typingTimer = null;
-    this.isTyping = false;
+    this.currentMission = null;
+    this.screens = [];
+    this.currentIndex = 0;
+    this.typewriterTimer = null;
+    this.isVoiceEnabled = true;
+    this.isSpeaking = false;
+    this.currentSpeechUtterance = null;
 
-    this.voice = new AteHabiVoice({ defaultRate: 0.92, defaultPitch: 1.08 });
-
-    this.panel = document.getElementById("lesson-panel");
-    this.missionPill = document.getElementById("lesson-mission-pill");
-    this.titleEl = document.getElementById("lesson-title");
-    this.sceneLabelEl = document.getElementById("lesson-scene-label");
-    this.counterEl = document.getElementById("lesson-step-counter");
-    this.speechEl = document.getElementById("speech-text");
-    this.visualEl = document.getElementById("lesson-visual-aid");
-    this.svgEl = document.getElementById("ate-habi-svg");
-
-    this.backBtn = document.getElementById("lesson-back-btn");
-    this.nextBtn = document.getElementById("lesson-next-btn");
-    this.skipTypingBtn = document.getElementById("skip-typing-btn");
-    this.skipLessonBtn = document.getElementById("skip-lesson-btn");
-    this.voiceBtn = document.getElementById("voice-toggle-btn");
-    this.charBtn = document.getElementById("character-stage-btn");
-
-    this._bindEvents();
+    this.initEventListeners();
   }
 
-  _bindEvents() {
-    this.backBtn?.addEventListener("click", () => {
-      if (this.stepIndex > 0) this.goToStep(this.stepIndex - 1);
-    });
-
-    this.nextBtn?.addEventListener("click", () => {
-      if (!this.lessonData || !this.lessonData.screens) return;
-      if (this.stepIndex < this.lessonData.screens.length - 1) {
-        this.goToStep(this.stepIndex + 1);
-      } else {
-        this.stopSpeech();
-        this.hide();
-        if (typeof this.onComplete === "function") {
-          this.onComplete(this.missionId);
-        }
-      }
-    });
-
-    this.skipTypingBtn?.addEventListener("click", () => this.finishTypingNow());
-    this.skipLessonBtn?.addEventListener("click", () => {
-      this.stopSpeech();
-      this.hide();
-      if (typeof this.onComplete === "function") {
-        this.onComplete(this.missionId);
-      }
-    });
-
-    this.voiceBtn?.addEventListener("click", () => {
-      this.voiceEnabled = !this.voiceEnabled;
-      if (this.voice) this.voice.setEnabled(this.voiceEnabled);
-      if (this.voiceBtn) {
-        this.voiceBtn.textContent = this.voiceEnabled ? "🔊 Voice: On" : "🔇 Voice: Off";
-      }
-      if (this.voiceEnabled && this.lessonData) {
-        this._speakCurrentScreen();
-      } else {
-        this.stopSpeech();
-      }
-    });
-
-    this.charBtn?.addEventListener("click", () => {
-      this._speakCurrentScreen();
-    });
+  initEventListeners() {
+    if (this.elements.characterBtn) {
+      this.elements.characterBtn.addEventListener("click", () => this.replayCurrentLine());
+    }
+    if (this.elements.backBtn) {
+      this.elements.backBtn.addEventListener("click", () => this.prevScreen());
+    }
+    if (this.elements.nextBtn) {
+      this.elements.nextBtn.addEventListener("click", () => this.nextScreen());
+    }
+    if (this.elements.skipBtn) {
+      this.elements.skipBtn.addEventListener("click", () => this.finishLesson());
+    }
+    if (this.elements.skipTypingBtn) {
+      this.elements.skipTypingBtn.addEventListener("click", () => this.skipTypewriter());
+    }
+    if (this.elements.voiceToggleBtn) {
+      this.elements.voiceToggleBtn.addEventListener("click", () => this.toggleVoice());
+    }
   }
 
-  _speakCurrentScreen(options = {}) {
-    if (!this.lessonData || !this.voiceEnabled) return;
-    const screens = this.lessonData.screens || [];
-    const current = screens[this.stepIndex];
-    if (!current) return;
+  start(mission) {
+    this.currentMission = mission;
+    this.screens = mission.lesson?.screens || [];
+    this.currentIndex = 0;
 
-    const textToSpeak = current.dictationText || current.speech;
-    this.speak(textToSpeak, {
-      isDictation: Boolean(current.dictationText),
-      audioUrl: current.audioUrl || null,
-      ...options
-    });
+    if (this.elements.missionPill) {
+      this.elements.missionPill.textContent = `MISSION ${mission.id}`;
+    }
+    if (this.elements.title) {
+      this.elements.title.textContent = mission.lesson?.title || "Animated Lesson";
+    }
+
+    this.renderScreen();
   }
 
-  open(mission) {
-    if (!mission || !mission.lesson) return;
-    this.missionId = mission.id;
-    this.lessonData = mission.lesson;
-
-    if (this.missionPill) this.missionPill.textContent = `MISSION ${mission.id}`;
-    if (this.titleEl) this.titleEl.textContent = mission.lesson.title || "";
-    if (this.panel) this.panel.classList.remove("hidden");
-    this.goToStep(0);
-  }
-
-  hide() {
+  renderScreen() {
     this.stopSpeech();
-    if (this.typingTimer) clearInterval(this.typingTimer);
-    this.isTyping = false;
-    if (this.panel) this.panel.classList.add("hidden");
-  }
+    this.clearTypewriter();
 
-  goToStep(index) {
-    if (this.typingTimer) clearInterval(this.typingTimer);
-    this.stopSpeech();
-    this.stepIndex = index;
-
-    const screens = this.lessonData?.screens || [];
-    const screen = screens[index];
+    const screen = this.screens[this.currentIndex];
     if (!screen) return;
 
-    if (this.sceneLabelEl) this.sceneLabelEl.textContent = screen.label || "";
-    if (this.counterEl) this.counterEl.textContent = `${index + 1} / ${screens.length}`;
-    if (this.backBtn) this.backBtn.disabled = index === 0;
-    if (this.nextBtn) {
-      this.nextBtn.textContent = index === screens.length - 1 ? "Start Level 1" : "Next";
+    if (this.elements.sceneLabel) {
+      this.elements.sceneLabel.textContent = screen.label || `Scene ${this.currentIndex + 1}`;
+    }
+    if (this.elements.stepCounter) {
+      this.elements.stepCounter.textContent = `${this.currentIndex + 1} / ${this.screens.length}`;
     }
 
-    this._renderVisualAid(screen);
-    this._typeText(screen.speech || "");
-    this._speakCurrentScreen();
-  }
-
-  _typeText(fullText) {
-    this.isTyping = true;
-    if (this.speechEl) this.speechEl.textContent = "";
-    if (this.skipTypingBtn) this.skipTypingBtn.classList.remove("hidden");
-
-    let i = 0;
-    this.typingTimer = setInterval(() => {
-      if (this.speechEl) this.speechEl.textContent += fullText.charAt(i);
-      i += 1;
-      if (i >= fullText.length) {
-        clearInterval(this.typingTimer);
-        this.isTyping = false;
-        if (this.skipTypingBtn) this.skipTypingBtn.classList.add("hidden");
-      }
-    }, 22);
-  }
-
-  finishTypingNow() {
-    if (!this.lessonData || !this.isTyping) return;
-    if (this.typingTimer) clearInterval(this.typingTimer);
-    const screens = this.lessonData.screens || [];
-    const screen = screens[this.stepIndex];
-    if (screen && this.speechEl) {
-      this.speechEl.textContent = screen.speech;
+    if (this.elements.backBtn) {
+      this.elements.backBtn.disabled = this.currentIndex === 0;
     }
-    this.isTyping = false;
-    if (this.skipTypingBtn) this.skipTypingBtn.classList.add("hidden");
-  }
+    if (this.elements.nextBtn) {
+      this.elements.nextBtn.textContent = this.currentIndex === this.screens.length - 1 ? "Start Level" : "Next";
+    }
 
-  speak(text, options = {}) {
-    if (!this.voiceEnabled || !this.voice) return;
-    this.voice.speak(text, {
-      isDictation: false,
-      ...options,
-      onStart: () => {
-        if (this.svgEl) this.svgEl.classList.add("speaking");
-        if (typeof options.onStart === "function") options.onStart();
-      },
-      onEnd: () => {
-        if (this.svgEl) this.svgEl.classList.remove("speaking");
-        if (typeof options.onEnd === "function") options.onEnd();
-      },
-      onError: (err) => {
-        if (this.svgEl) this.svgEl.classList.remove("speaking");
-        if (typeof options.onError === "function") options.onError(err);
-      }
+    this.renderVisualAid(screen);
+    this.startTypewriter(screen.speech, () => {
+      this.speakText(screen.dictationText || screen.speech);
     });
+  }
+
+  startTypewriter(text, onComplete) {
+    if (!this.elements.speechText) return;
+    this.elements.speechText.textContent = "";
+    let index = 0;
+
+    this.setMouthSpeaking(true);
+
+    this.typewriterTimer = setInterval(() => {
+      if (index < text.length) {
+        this.elements.speechText.textContent += text.charAt(index);
+        index++;
+      } else {
+        this.clearTypewriter();
+        if (!this.isSpeaking) {
+          this.setMouthSpeaking(false);
+        }
+        if (onComplete) onComplete();
+      }
+    }, 24);
+  }
+
+  skipTypewriter() {
+    const screen = this.screens[this.currentIndex];
+    if (!screen) return;
+
+    this.clearTypewriter();
+    if (this.elements.speechText) {
+      this.elements.speechText.textContent = screen.speech;
+    }
+    this.speakText(screen.dictationText || screen.speech);
+  }
+
+  clearTypewriter() {
+    if (this.typewriterTimer) {
+      clearInterval(this.typewriterTimer);
+      this.typewriterTimer = null;
+    }
+  }
+
+  speakText(text) {
+    if (!this.isVoiceEnabled || !("speechSynthesis" in window)) return;
+
+    this.stopSpeech();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.05;
+
+    utterance.onstart = () => {
+      this.isSpeaking = true;
+      this.setMouthSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      this.isSpeaking = false;
+      this.setMouthSpeaking(false);
+    };
+
+    utterance.onerror = () => {
+      this.isSpeaking = false;
+      this.setMouthSpeaking(false);
+    };
+
+    this.currentSpeechUtterance = utterance;
+    window.speechSynthesis.speak(utterance);
   }
 
   stopSpeech() {
-    if (this.voice) this.voice.stop();
-    if (this.svgEl) this.svgEl.classList.remove("speaking");
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    this.isSpeaking = false;
+    this.setMouthSpeaking(false);
   }
 
-  _renderVisualAid(screen) {
-    if (!this.visualEl) return;
-    this.visualEl.innerHTML = "";
+  setMouthSpeaking(speaking) {
+    const svgEl = this.elements.svg || document.getElementById("ate-habi-svg");
+    if (!svgEl) return;
 
-    if (screen.visualType === "keyPhrase") {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "badge-pill badge-mastered";
-      btn.style.cursor = "pointer";
-      btn.textContent = `🔑 Key Phrase: ${screen.keyPhrase} (Tap to hear)`;
-      btn.addEventListener("click", () => {
-        this.speak(screen.keyPhrase, { isDictation: true, rate: 0.85 });
-      });
-      this.visualEl.appendChild(btn);
-      return;
+    if (speaking) {
+      svgEl.classList.add("speaking");
+    } else {
+      svgEl.classList.remove("speaking");
     }
+  }
 
-    if (screen.visualType === "syllables") {
-      const parts = Array.isArray(screen.parts) ? screen.parts : [];
-      const fullWord = screen.word || parts.join("");
+  replayCurrentLine() {
+    const screen = this.screens[this.currentIndex];
+    if (!screen) return;
+    this.skipTypewriter();
+  }
 
-      parts.forEach((part, idx) => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "syllable-chip" + (idx === screen.highlightIndex ? " lit" : "");
-        chip.style.cursor = "pointer";
-        chip.textContent = part;
-        chip.title = `Tap to hear syllable "${part}"`;
-        chip.addEventListener("click", () => {
-          this.speak(part, { isDictation: true, rate: 0.76 });
-        });
-        this.visualEl.appendChild(chip);
-      });
+  toggleVoice() {
+    this.isVoiceEnabled = !this.isVoiceEnabled;
+    if (this.elements.voiceToggleBtn) {
+      this.elements.voiceToggleBtn.textContent = this.isVoiceEnabled ? "🔊 Voice: On" : "63 Voice: Off";
+    }
+    if (!this.isVoiceEnabled) {
+      this.stopSpeech();
+    }
+  }
 
-      if (fullWord) {
-        const sayWordBtn = document.createElement("button");
-        sayWordBtn.type = "button";
-        sayWordBtn.className = "btn btn-ghost btn-sm";
-        sayWordBtn.textContent = `🔊 Say "${fullWord}"`;
-        sayWordBtn.addEventListener("click", () => {
-          this.speak(fullWord, { isDictation: true, rate: 0.84 });
-        });
-        this.visualEl.appendChild(sayWordBtn);
+  prevScreen() {
+    if (this.currentIndex > 0) {
+      this.currentIndex--;
+      this.renderScreen();
+    }
+  }
+
+  nextScreen() {
+    if (this.currentIndex < this.screens.length - 1) {
+      this.currentIndex++;
+      this.renderScreen();
+    } else {
+      this.finishLesson();
+    }
+  }
+
+  finishLesson() {
+    this.stopSpeech();
+    this.clearTypewriter();
+    if (typeof this.onComplete === "function") {
+      this.onComplete();
+    }
+  }
+
+  renderVisualAid(screen) {
+    const box = this.elements.visualAid;
+    if (!box) return;
+    box.innerHTML = "";
+
+    if (!screen.visualType) return;
+
+    switch (screen.visualType) {
+      case "keyPhrase": {
+        const chip = document.createElement("div");
+        chip.className = "phrase-chip unlocked";
+        chip.style.fontSize = "1.1rem";
+        chip.style.padding = "10px 18px";
+        chip.textContent = `🔑 Key Phrase: ${screen.keyPhrase || ""}`;
+        box.appendChild(chip);
+        break;
       }
-      return;
-    }
 
-    if (screen.visualType === "context") {
-      const fullSentence =
-        screen.dictationText || `${screen.before || ""}${screen.filled || ""}${screen.after || ""}`;
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "highlight-word";
-      btn.style.background = "transparent";
-      btn.style.border = "none";
-      btn.style.cursor = "pointer";
-      btn.style.textAlign = "left";
-      btn.title = "Tap to hear sentence";
-      btn.innerHTML = `${screen.before || ""}<span class="tricky-letter">${screen.filled || ""}</span>${screen.after || ""} 🔊`;
-      btn.addEventListener("click", () => {
-        this.speak(fullSentence, { isDictation: true, rate: 0.82 });
-      });
-      this.visualEl.appendChild(btn);
-      return;
-    }
+      case "syllables": {
+        if (Array.isArray(screen.parts)) {
+          screen.parts.forEach((part, idx) => {
+            const chip = document.createElement("span");
+            chip.className = `syllable-chip ${idx === screen.highlightIndex ? "lit" : ""}`;
+            chip.textContent = part;
+            box.appendChild(chip);
+          });
+        }
+        break;
+      }
 
-    if (screen.visualType === "tricky") {
-      (screen.samples || []).forEach((s) => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "syllable-chip";
-        chip.style.cursor = "pointer";
-        chip.innerHTML = `${s.word} <span class="tricky-letter">(${s.mark})</span>`;
-        chip.title = `Tap to hear "${s.word}"`;
-        chip.addEventListener("click", () => {
-          this.speak(s.word, { isDictation: true, rate: 0.82 });
-        });
-        this.visualEl.appendChild(chip);
-      });
-      return;
-    }
+      case "context": {
+        const wrapper = document.createElement("div");
+        wrapper.className = "highlight-word";
+        wrapper.innerHTML = `${screen.before || ""}<strong style="color:var(--purple); text-decoration:underline;">${screen.filled || screen.blank || ""}</strong>${screen.after || ""}`;
+        box.appendChild(wrapper);
+        break;
+      }
 
-    if (screen.visualType === "checkWord") {
-      const word = screen.word || "";
-      word.split("").forEach((ch) => {
-        const chip = document.createElement("button");
-        chip.type = "button";
+      case "tricky": {
+        if (Array.isArray(screen.samples)) {
+          screen.samples.forEach((sample) => {
+            const chip = document.createElement("div");
+            chip.className = "syllable-chip";
+            chip.innerHTML = `${sample.word} (<span class="tricky-letter">${sample.mark}</span>)`;
+            box.appendChild(chip);
+          });
+        }
+        break;
+      }
+
+      case "checkWord": {
+        const chip = document.createElement("div");
         chip.className = "syllable-chip lit";
-        chip.style.cursor = "pointer";
-        chip.textContent = ch;
-        chip.title = `Tap to hear letter "${ch}"`;
-        chip.addEventListener("click", () => {
-          this.speak(ch, { isDictation: true, rate: 0.78 });
-        });
-        this.visualEl.appendChild(chip);
-      });
-
-      if (word) {
-        const sayWordBtn = document.createElement("button");
-        sayWordBtn.type = "button";
-        sayWordBtn.className = "btn btn-ghost btn-sm";
-        sayWordBtn.textContent = `🔊 Say "${word}"`;
-        sayWordBtn.addEventListener("click", () => {
-          this.speak(word, { isDictation: true, rate: 0.84 });
-        });
-        this.visualEl.appendChild(sayWordBtn);
+        chip.style.fontSize = "1.2rem";
+        chip.textContent = `🔍 ${screen.word || ""}`;
+        box.appendChild(chip);
+        break;
       }
-      return;
-    }
 
-    this.visualEl.innerHTML = `<span class="badge-pill badge-passed">🪡 Ready for Level 1!</span>`;
+      case "ready": {
+        const chip = document.createElement("div");
+        chip.className = "phrase-chip unlocked";
+        chip.style.fontSize = "1.1rem";
+        chip.textContent = "🧵 Ready to Weave!";
+        box.appendChild(chip);
+        break;
+      }
+
+      default:
+        break;
+    }
   }
 }
