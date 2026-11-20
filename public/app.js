@@ -73,6 +73,7 @@ const playLevelPill = document.getElementById("play-level-pill");
 const playLevelTitle = document.getElementById("play-level-title");
 const hudItemEl = document.getElementById("hud-item");
 const hudScoreEl = document.getElementById("hud-score");
+const exitLevelBtn = document.getElementById("exit-level-btn");
 const progressThreadsEl = document.getElementById("progress-threads");
 const questionStageEl = document.getElementById("question-stage");
 const itemFeedbackEl = document.getElementById("item-feedback");
@@ -278,6 +279,33 @@ backToMapBtn.addEventListener("click", () => {
   resultPanel.classList.add("hidden");
   renderMissionMap();
 });
+
+// Exit button on the quiz sheet.
+// Uses an in-page "tap again" confirmation instead of window.confirm(),
+// because some mobile browsers and in-app views silently block native dialogs.
+let exitConfirmTimer = null;
+
+function resetExitButton() {
+  if (exitConfirmTimer) {
+    clearTimeout(exitConfirmTimer);
+    exitConfirmTimer = null;
+  }
+  if (exitLevelBtn) exitLevelBtn.textContent = "✕ Exit";
+}
+
+if (exitLevelBtn) {
+  exitLevelBtn.addEventListener("click", () => {
+    if (!exitConfirmTimer) {
+      exitLevelBtn.textContent = "Tap again to leave";
+      exitConfirmTimer = setTimeout(resetExitButton, 3000);
+      return;
+    }
+    resetExitButton();
+    if (voice) voice.stop();
+    gameplayPanel.classList.add("hidden");
+    renderMissionMap();
+  });
+}
 
 async function loadMyAttempts() {
   state.attemptsByKey = {};
@@ -492,6 +520,7 @@ function startLevel(missionId, levelNum, attemptNum = 1) {
   const lvl = mission?.levels.find((l) => l.level === levelNum);
   if (!mission || !lvl) return;
 
+  resetExitButton();
   lessonController.hide();
   resultPanel.classList.add("hidden");
   gameplayPanel.classList.remove("hidden");

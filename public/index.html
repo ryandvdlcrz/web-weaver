@@ -97,6 +97,7 @@
           <div class="lesson-controls-top">
             <button type="button" id="voice-toggle-btn" class="btn btn-ghost btn-sm">🔊 Voice: On</button>
             <button type="button" id="skip-lesson-btn" class="btn btn-ghost btn-sm">Skip Lesson</button>
+            <button type="button" id="lesson-close-btn" class="btn btn-ghost btn-sm" aria-label="Close lesson">✕ Close</button>
           </div>
         </div>
 
@@ -111,9 +112,12 @@
               <line x1="104" y1="128" x2="104" y2="176" stroke="#d99b26" stroke-width="3" />
               <rect x="81" y="100" width="18" height="18" rx="8" fill="#e8b490" />
               <g class="head-group">
+                <!-- Back hair -->
                 <path d="M48 64 C48 30, 132 30, 132 64 C135 92, 122 108, 90 108 C58 108, 45 92, 48 64 Z" fill="#3a2318" />
+                <!-- Face -->
                 <ellipse cx="90" cy="70" rx="34" ry="36" fill="#e8b490" />
-                <path d="M56 58 C64 42, 116 42, 124 58 C114 48, 66 48, 56 58 Z" fill="#3a2318" />
+                <!-- Front hair: full cap over the top of the head with a side-swept fringe -->
+                <path d="M53 64 C47 36, 66 24, 90 24 C114 24, 133 36, 127 64 C125 56, 119 48, 110 45 C100 52, 80 54, 68 49 C60 53, 55 58, 53 64 Z" fill="#3a2318" />
                 <circle cx="56" cy="72" r="6" fill="#e8b490" />
                 <circle cx="124" cy="72" r="6" fill="#e8b490" />
                 <circle cx="56" cy="79" r="3.5" fill="#d99b26" />
@@ -165,6 +169,7 @@
           <div class="gameplay-hud">
             <div class="hud-pill">Item: <strong id="hud-item">1/5</strong></div>
             <div class="hud-pill">Score: <strong id="hud-score">0/5</strong></div>
+            <button type="button" id="exit-level-btn" class="btn btn-ghost btn-sm" aria-label="Exit level">✕ Exit</button>
           </div>
         </div>
 

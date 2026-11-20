@@ -49,6 +49,7 @@ body {
                     radial-gradient(circle at 88% 15%, rgba(217, 155, 38, 0.08), transparent 40%);
   color: var(--ink);
   min-height: 100vh;
+  min-height: 100dvh;
   line-height: 1.5;
   display: flex;
   flex-direction: column;
@@ -500,8 +501,15 @@ h1, h2, h3, .brand-title {
   animation: habiBob 2.6s ease-in-out infinite;
 }
 
+/* --------------------------------------------------------------------------
+   FIXED ATE HABI EYE BLINK:
+   transform-box: fill-box makes "center" refer to each eye's own bounding
+   box instead of the whole SVG viewBox, so the eyes close in place and
+   no longer slide down the face.
+   -------------------------------------------------------------------------- */
 .ate-habi .eye-left,
 .ate-habi .eye-right {
+  transform-box: fill-box;
   transform-origin: center;
   animation: habiBlink 4.5s infinite;
 }
@@ -917,54 +925,391 @@ table {
   white-space: nowrap;
 }
 
-/* Mobile Responsive Breakpoints */
+/* ==========================================================================
+   MOBILE (max-width: 680px)
+   Lesson, gameplay and result panels become full-screen pop-up sheets with a
+   sticky header and a sticky bottom action bar. Only the .hidden class is
+   used to open/close them, so no JS changes are needed for that part.
+   ========================================================================== */
+@keyframes sheetUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
 @media screen and (max-width: 680px) {
+
+  /* ---------- Page chrome ---------- */
   .topbar {
-    padding: 10px 16px;
+    position: static;
+    padding: 10px 14px;
+    gap: 8px;
   }
 
-  .brand-sub {
-    display: none;
+  .brand { gap: 10px; }
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .brand-sub { display: none; }
+
+  .top-actions { gap: 8px; }
+
+  .top-actions .btn {
+    min-height: 40px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
   }
 
   .container {
     padding: 0 10px 32px;
-    margin: 14px auto;
+    margin: 12px auto;
   }
 
-  .lesson-stage {
-    grid-template-columns: 1fr;
-    gap: 14px;
+  .card { margin-bottom: 14px; }
+
+  .login-card { margin: 8px auto; }
+
+  /* ---------- Student banner ---------- */
+  .student-banner { gap: 12px; }
+
+  .student-meta { width: 100%; }
+
+  .key-phrases-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
   }
+
+  .phrase-chip {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ---------- Mission map ---------- */
+  .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .section-head .muted { font-size: 0.85rem; }
+
+  .mission-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mission-tab {
+    flex: 0 0 78%;
+    scroll-snap-align: start;
+    padding: 12px 14px;
+  }
+
+  .level-grid { grid-template-columns: 1fr; }
+
+  .level-card .btn {
+    flex: 1 1 auto;
+    min-height: 44px;
+  }
+
+  /* ---------- Pop-up sheets (shared) ---------- */
+  #lesson-panel:not(.hidden),
+  #gameplay-panel:not(.hidden),
+  #result-panel:not(.hidden) {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    margin: 0;
+    padding: 0 14px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    animation: sheetUp 0.22s ease-out;
+  }
+
+  /* Lock the page behind an open sheet */
+  body:has(#lesson-panel:not(.hidden)),
+  body:has(#gameplay-panel:not(.hidden)),
+  body:has(#result-panel:not(.hidden)) {
+    overflow: hidden;
+  }
+
+  /* ---------- Lesson sheet ---------- */
+  .lesson-top {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin: 0 -14px 14px;
+    padding: 12px 14px 10px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .lesson-top > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .lesson-top h3 { font-size: 1.1rem; }
+
+  .lesson-controls-top {
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .lesson-controls-top .btn {
+    flex: 1 1 0;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  /* Ate Habi on the left, speech bubble on the right, visual aid below */
+  .lesson-stage {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .speech-column { display: contents; }
 
   .character-btn {
-    flex-direction: row;
-    justify-content: center;
-    gap: 12px;
+    grid-column: 1;
+    grid-row: 1;
+    flex-direction: column;
+    padding: 8px 4px;
+    gap: 4px;
   }
 
   .ate-habi {
-    width: 96px;
-    height: 108px;
+    width: 76px;
+    height: 84px;
   }
 
-  .level-grid {
+  .tap-hint {
+    font-size: 0.62rem;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .speech-bubble {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 12px 14px;
+  }
+
+  .speech-text {
+    font-size: 1rem;
+    min-height: 48px;
+  }
+
+  .visual-aid-box {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 64px;
+  }
+
+  .lesson-nav {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin: auto -14px 0;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -6px 16px rgba(42, 22, 66, 0.08);
+  }
+
+  .lesson-nav .btn {
+    flex: 1;
+    min-height: 52px;
+    font-size: 1rem;
+  }
+
+  /* ---------- Gameplay sheet ---------- */
+  .gameplay-top {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    align-items: stretch;
+    gap: 8px;
+    margin: 0 -14px 12px;
+    padding: 12px 14px 10px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .gameplay-top > div:first-child { flex: 1 1 100%; }
+
+  .gameplay-top h3 { font-size: 1.1rem; }
+
+  .gameplay-hud {
+    width: 100%;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .hud-pill {
+    flex: 1;
+    text-align: center;
+    padding: 6px 10px;
+    font-size: 0.88rem;
+  }
+
+  .gameplay-hud .btn { flex: 0 0 auto; }
+
+  .progress-threads { margin-bottom: 16px; }
+
+  .question-stage { padding-bottom: 16px; }
+
+  .question-prompt { font-size: 1.1rem; }
+
+  /* Multiple choice / true or false */
+  .options-list {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
-  .sort-bins {
-    grid-template-columns: 1fr;
+  .choice-btn {
+    min-height: 56px;
+    padding: 14px 16px;
+    font-size: 1.05rem;
   }
 
+  /* Buttons inside questions (Listen, Speed, Clear, Check, etc.) */
+  .question-stage .btn-sm {
+    min-height: 48px;
+    flex: 1 1 auto;
+  }
+
+  .question-stage > .btn-sm {
+    width: 100%;
+    min-height: 52px;
+  }
+
+  /* Loom tiles */
+  .loom-build-row,
+  .loom-bank-row { gap: 6px; }
+
+  .slot-box {
+    min-width: 40px;
+    height: 48px;
+  }
+
+  .tile-btn {
+    min-width: 48px;
+    height: 52px;
+  }
+
+  /* Sorting */
+  .sort-bins { grid-template-columns: 1fr; }
+
+  .sort-bin { min-height: 90px; }
+
+  .word-chip-btn {
+    min-height: 44px;
+    padding: 8px 16px;
+  }
+
+  .placed-chip {
+    padding: 8px 12px;
+    font-size: 0.95rem;
+  }
+
+  /* Matching: keep two columns so both sides stay visible */
   .match-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
+
+  .match-item-btn {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+
+  /* Feedback becomes a sticky bottom bar */
+  #gameplay-panel .item-feedback {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin: auto -14px 0;
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-radius: 16px 16px 0 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.14);
+  }
+
+  #gameplay-panel .item-feedback .btn {
+    width: 100%;
+    min-height: 52px;
+  }
+
+  /* ---------- Result sheet ---------- */
+  #result-panel:not(.hidden) {
+    padding-top: calc(18px + env(safe-area-inset-top, 0px));
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  #result-panel .status-text { margin-bottom: 16px; }
+
+  .unlock-banner { font-size: 0.95rem; }
 
   .result-actions {
-    flex-direction: column;
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: auto -14px 0;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -6px 16px rgba(42, 22, 66, 0.08);
   }
 
   .result-actions .btn {
     width: 100%;
+    min-height: 52px;
+  }
+
+  #next-level-btn:not(.hidden) {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #lesson-panel,
+  #gameplay-panel,
+  #result-panel {
+    animation: none !important;
   }
 }

@@ -32,6 +32,7 @@ export class AteHabiLesson {
       backBtn: this.elements.backBtn || document.getElementById("lesson-back-btn"),
       nextBtn: this.elements.nextBtn || document.getElementById("lesson-next-btn"),
       skipBtn: this.elements.skipBtn || document.getElementById("skip-lesson-btn"),
+      closeBtn: this.elements.closeBtn || document.getElementById("lesson-close-btn"),
       skipTypingBtn: this.elements.skipTypingBtn || document.getElementById("skip-typing-btn"),
       voiceToggleBtn: this.elements.voiceToggleBtn || document.getElementById("voice-toggle-btn"),
       svg: this.elements.svg || document.getElementById("ate-habi-svg")
@@ -69,6 +70,10 @@ export class AteHabiLesson {
     }
     if (this.elements.skipBtn) {
       this.elements.skipBtn.addEventListener("click", () => this.finishLesson());
+    }
+    // Close only hides the lesson and returns to the mission map (it does not start the level)
+    if (this.elements.closeBtn) {
+      this.elements.closeBtn.addEventListener("click", () => this.hide());
     }
     if (this.elements.skipTypingBtn) {
       this.elements.skipTypingBtn.addEventListener("click", () => this.skipTypewriter());

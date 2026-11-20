@@ -190,6 +190,125 @@
     .hidden {
       display: none !important;
     }
+
+    /* ======================================================================
+       MOBILE (max-width: 680px)
+       The wide roster table turns into one card per student. Labels come from
+       the ::before rules below, so admin.js does not need any changes.
+       ====================================================================== */
+    @media screen and (max-width: 680px) {
+      .topbar {
+        padding: 10px 14px;
+        gap: 8px;
+      }
+      .brand { gap: 10px; }
+      .brand-mark { font-size: 1.5rem; }
+      .brand-title { font-size: 1.1rem; }
+      .btn-outline {
+        padding: 8px 12px;
+        font-size: 0.82rem;
+      }
+
+      .admin-wrap {
+        margin: 16px auto;
+        padding: 0 12px 32px;
+      }
+      .admin-card {
+        padding: 16px;
+        border-radius: 14px;
+        margin-bottom: 16px;
+      }
+      .admin-login-box { margin: 16px auto; }
+
+      /* 16px font stops iOS from zooming into inputs */
+      .form-group input,
+      .form-group select,
+      .toolbar select {
+        font-size: 16px;
+        min-height: 48px;
+      }
+
+      .btn-theme {
+        width: 100%;
+        min-height: 48px;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .toolbar-left {
+        width: 100%;
+        flex-wrap: nowrap;
+      }
+      .toolbar-left select {
+        flex: 1;
+        min-width: 0;
+      }
+      .btn-sm-ghost {
+        min-height: 44px;
+        padding: 8px 14px;
+      }
+
+      /* Table -> cards */
+      .table-wrap { overflow-x: visible; }
+
+      table, tbody, tr, td {
+        display: block;
+        width: 100%;
+      }
+      thead { display: none; }
+
+      tbody tr {
+        background: #ffffff;
+        border: 2px solid #e2d9cc;
+        border-radius: 14px;
+        padding: 6px 14px;
+        margin-bottom: 12px;
+      }
+
+      td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px dashed #eadfce;
+        text-align: right;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      td::before {
+        font-weight: 800;
+        color: #4a2e6b;
+        text-align: left;
+        flex-shrink: 0;
+      }
+
+      td:nth-child(1)::before { content: "Username"; }
+      td:nth-child(2)::before { content: "Full Name"; }
+      td:nth-child(3)::before { content: "Section"; }
+      td:nth-child(4)::before { content: "Status"; }
+      td:nth-child(5)::before { content: "Attempts"; }
+      td:nth-child(6)::before { content: "Avg Accuracy"; }
+
+      td:last-child {
+        border-bottom: none;
+        gap: 8px;
+        padding-top: 12px;
+      }
+      td:last-child::before { content: none; }
+      td:last-child .btn-sm-ghost { flex: 1; }
+
+      /* "No student accounts found." row */
+      td[colspan] {
+        display: block;
+        text-align: center;
+        border: none;
+      }
+      td[colspan]::before { content: none; }
+    }
   </style>
 </head>
 <body>
