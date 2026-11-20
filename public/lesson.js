@@ -1,12 +1,37 @@
 /**
  * Ate Habi Animated Lesson Guide Controller
- * Manages typewriter animation, speech synthesis sync, and visual aid rendering[cite: 6].
+ * Manages typewriter animation, speech synthesis sync, and visual aid rendering.
  */
 
 export class AteHabiLesson {
-  constructor(elements, onComplete) {
-    this.elements = elements;
-    this.onComplete = onComplete;
+  constructor(options = {}) {
+    // Handle both parameter patterns: options object or elements object
+    if (typeof options === "function") {
+      this.onComplete = options;
+      this.elements = {};
+    } else {
+      this.onComplete = options.onComplete || null;
+      this.elements = options.elements || options;
+    }
+
+    // Default DOM elements binding if not explicitly passed
+    this.elements = {
+      panel: this.elements.panel || document.getElementById("lesson-panel"),
+      missionPill: this.elements.missionPill || document.getElementById("lesson-mission-pill"),
+      title: this.elements.title || document.getElementById("lesson-title"),
+      sceneLabel: this.elements.sceneLabel || document.getElementById("lesson-scene-label"),
+      stepCounter: this.elements.stepCounter || document.getElementById("lesson-step-counter"),
+      speechText: this.elements.speechText || document.getElementById("speech-text"),
+      visualAid: this.elements.visualAid || document.getElementById("lesson-visual-aid"),
+      characterBtn: this.elements.characterBtn || document.getElementById("character-stage-btn"),
+      backBtn: this.elements.backBtn || document.getElementById("lesson-back-btn"),
+      nextBtn: this.elements.nextBtn || document.getElementById("lesson-next-btn"),
+      skipBtn: this.elements.skipBtn || document.getElementById("skip-lesson-btn"),
+      skipTypingBtn: this.elements.skipTypingBtn || document.getElementById("skip-typing-btn"),
+      voiceToggleBtn: this.elements.voiceToggleBtn || document.getElementById("voice-toggle-btn"),
+      svg: this.elements.svg || document.getElementById("ate-habi-svg")
+    };
+
     this.currentMission = null;
     this.screens = [];
     this.currentIndex = 0;
@@ -14,6 +39,13 @@ export class AteHabiLesson {
     this.isVoiceEnabled = true;
     this.isSpeaking = false;
     this.currentSpeechUtterance = null;
+
+    // Provide legacy/compat voice interface used by app.js
+    this.voice = {
+      speak: (text, opts = {}) => this.speakText(text, opts),
+      stop: () => this.stopSpeech(),
+      setEnabled: (enabled) => { this.isVoiceEnabled = enabled; }
+    };
 
     this.initEventListeners();
   }
@@ -39,16 +71,32 @@ export class AteHabiLesson {
     }
   }
 
+  // Alias methods to satisfy app.js calls
+  open(mission) {
+    if (this.elements.panel) {
+      this.elements.panel.classList.remove("hidden");
+    }
+    this.start(mission);
+  }
+
+  hide() {
+    this.stopSpeech();
+    this.clearTypewriter();
+    if (this.elements.panel) {
+      this.elements.panel.classList.add("hidden");
+    }
+  }
+
   start(mission) {
     this.currentMission = mission;
-    this.screens = mission.lesson?.screens || [];
+    this.screens = mission?.lesson?.screens || [];
     this.currentIndex = 0;
 
     if (this.elements.missionPill) {
       this.elements.missionPill.textContent = `MISSION ${mission.id}`;
     }
     if (this.elements.title) {
-      this.elements.title.textContent = mission.lesson?.title || "Animated Lesson";
+      this.elements.title.textContent = mission?.lesson?.title || "Animated Lesson";
     }
 
     this.renderScreen();
@@ -120,28 +168,31 @@ export class AteHabiLesson {
     }
   }
 
-  speakText(text) {
+  speakText(text, options = {}) {
     if (!this.isVoiceEnabled || !("speechSynthesis" in window)) return;
 
     this.stopSpeech();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.05;
+    utterance.rate = options.rate || 0.95;
+    utterance.pitch = options.pitch || 1.05;
 
     utterance.onstart = () => {
       this.isSpeaking = true;
       this.setMouthSpeaking(true);
+      if (options.onStart) options.onStart();
     };
 
     utterance.onend = () => {
       this.isSpeaking = false;
       this.setMouthSpeaking(false);
+      if (options.onEnd) options.onEnd();
     };
 
-    utterance.onerror = () => {
+    utterance.onerror = (err) => {
       this.isSpeaking = false;
       this.setMouthSpeaking(false);
+      if (options.onError) options.onError(err);
     };
 
     this.currentSpeechUtterance = utterance;
@@ -176,7 +227,7 @@ export class AteHabiLesson {
   toggleVoice() {
     this.isVoiceEnabled = !this.isVoiceEnabled;
     if (this.elements.voiceToggleBtn) {
-      this.elements.voiceToggleBtn.textContent = this.isVoiceEnabled ? "🔊 Voice: On" : "63 Voice: Off";
+      this.elements.voiceToggleBtn.textContent = this.isVoiceEnabled ? "🔊 Voice: On" : "🔇 Voice: Off";
     }
     if (!this.isVoiceEnabled) {
       this.stopSpeech();
@@ -200,10 +251,9 @@ export class AteHabiLesson {
   }
 
   finishLesson() {
-    this.stopSpeech();
-    this.clearTypewriter();
+    this.hide();
     if (typeof this.onComplete === "function") {
-      this.onComplete();
+      this.onComplete(this.currentMission?.id);
     }
   }
 

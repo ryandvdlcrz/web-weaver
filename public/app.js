@@ -186,7 +186,6 @@ loginForm.addEventListener("submit", async (e) => {
       })
     );
 
-    // Save student profile keyed by username for constant tracking
     await setDoc(
       doc(db, "students", state.username.toLowerCase()),
       {
@@ -287,14 +286,12 @@ async function loadMyAttempts() {
   try {
     let docsList = [];
 
-    // Primary search: Query attempts by student username
     if (curUsername) {
       const qUser = query(collection(db, "attempts"), where("username", "==", curUsername));
       const snapUser = await getDocs(qUser);
       snapUser.forEach((d) => docsList.push(d.data()));
     }
 
-    // Secondary search: Query by class code / section name as fallback
     const curSection = state.sectionName || state.classCode;
     if (curSection && docsList.length === 0) {
       const qClass = query(collection(db, "attempts"), where("classCode", "==", curSection));
