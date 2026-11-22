@@ -9,12 +9,12 @@
   "theme_color": "#5c2483",
   "icons": [
     {
-      "src": "https://img.icons8.com/emoji/192/yarn-emoji.png",
+      "src": "icon-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "https://img.icons8.com/emoji/512/yarn-emoji.png",
+      "src": "icon-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
